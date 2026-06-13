@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>⚡ 英単語ハックマスター - 英検準1級 ⚡</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .progress-bar {
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-blue-500/30">
+
+    <!-- APP HEADER -->
+    <header class="w-full glass-card border-b border-slate-800 px-4 py-3 sticky top-0 z-50 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+            <span class="text-xl">⚡</span>
+            <h1 class="text-base font-bold tracking-wider text-blue-400">HACK MASTER [英検準1級]</h1>
+        </div>
+        <!-- Combo Indicator -->
+        <div id="header-combo" class="hidden bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black px-2.5 py-0.5 rounded-full text-xs tracking-wider animate-bounce">
+            🔥 <span id="header-combo-count">0</span> COMBO
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 w-full max-w-md mx-auto p-4 flex flex-col justify-start">
+
+        <!-- 1. HOME SCREEN -->
+        <div id="screen-home" class="space-y-6 w-full">
+            <div class="text-center py-2">
+                <p class="text-xs text-slate-400 uppercase tracking-widest">Target Acquired</p>
+                <h2 class="text-xl font-black text-slate-100 mt-1">パス単 英検準1級 完全連動</h2>
+                <p class="text-xs text-emerald-400 mt-1">🌹 語源・イメージ・補足 100%同期済み</p>
+            </div>
+
+            <!-- Dashboard / Overview -->
+            <div class="glass-card rounded-2xl p-4 border border-blue-500/20 bg-gradient-to-br from-blue-950/30 to-slate-900/50">
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                    <span>総クリア率 (マスター済みの割合)</span>
+                    <span id="total-progress-percent" class="font-bold text-blue-400">0%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div id="total-progress-bar" class="progress-bar bg-gradient-to-r from-blue-500 to-indigo-500 h-full w-0"></div>
+                </div>
+            </div>
+
+            <!-- Section Lists -->
+            <div id="section-list" class="space-y-3.5 max-h-[60vh] overflow-y-auto pr-1">
+                <!-- Section cards injected here -->
+            </div>
+        </div>
+
+        <!-- 2. QUIZ SCREEN -->
+        <div id="screen-quiz" class="hidden space-y-4 w-full flex-1 flex flex-col justify-between">
+            
+            <div class="flex items-center justify-between">
+                <button id="btn-back" class="text-xs font-bold text-slate-400 hover:text-slate-200 flex items-center space-x-1 py-1 px-2 rounded-lg bg-slate-800/50">
+                    <span>↩ 中断して戻る</span>
+                </button>
+                <div class="text-xs font-mono tracking-wider bg-slate-800/80 px-2.5 py-1 rounded-md text-slate-300">
+                    残り: <span id="quiz-count" class="font-bold text-blue-400">0</span>問
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                    <div id="quiz-progress-bar" class="progress-bar bg-blue-500 h-full w-0"></div>
+                </div>
+                <div class="flex justify-between items-center px-0.5">
+                    <span id="quiz-combo-badge" class="opacity-0 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded border border-amber-500/30 transition-all">
+                        🔥 COMBO <span id="quiz-combo-count">0</span>
+                    </span>
+                    <span id="quiz-section-title" class="text-[10px] text-slate-500 uppercase tracking-wider font-bold"></span>
+                </div>
+            </div>
+
+            <!-- FLASH CARD CONTAINER -->
+            <div class="glass-card rounded-2xl p-5 border border-slate-700/60 bg-gradient-to-b from-slate-800/40 to-slate-900/60 flex-1 flex flex-col justify-between shadow-xl min-h-[350px]">
+                
+                <div class="space-y-3.5">
+                    <div class="space-y-1">
+                        <span class="text-[10px] uppercase font-bold tracking-widest text-slate-500 block">日本語意味・補足融合</span>
+                        <div class="text-slate-100 font-bold text-base leading-snug" id="quiz-hint-meaning"></div>
+                    </div>
+
+                    <div id="quiz-memory-booster" class="grid grid-cols-1 gap-2 pt-2 border-t border-slate-800 text-[11px]">
+                        <div class="bg-slate-950/40 p-2 rounded-lg border border-slate-800/50">
+                            <span class="text-[9px] font-bold text-blue-400 block">💡 語源・イメージ感覚補足</span>
+                            <span id="quiz-boost-etymology" class="text-slate-300 font-medium whitespace-pre-line"></span>
+                        </div>
+                        <div class="bg-slate-950/40 p-2 rounded-lg border border-slate-800/50" id="prep-box">
+                            <span class="text-[9px] font-bold text-indigo-400 block">🔗 熟語・前置詞イメージ</span>
+                            <span id="quiz-boost-preposition" class="text-slate-300 font-medium whitespace-pre-line"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="py-4 my-auto text-center">
+                    <p class="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-1">英語フレーズ（空欄をハックせよ）</p>
+                    <div id="quiz-phrase" class="text-base md:text-lg font-bold text-slate-100 leading-relaxed tracking-wide"></div>
+                </div>
+
+                <div id="quiz-answer-zone" class="invisible py-3 text-center border-t border-slate-800/60 bg-slate-950/20 rounded-xl space-y-2">
+                    <p class="text-[10px] uppercase font-bold tracking-widest text-blue-400">正解単語</p>
+                    <div id="quiz-correct-word" class="text-2xl font-black tracking-wider text-emerald-400"></div>
+                    
+                    <div class="flex justify-center space-x-2 pt-1">
+                        <button id="btn-speak-word" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1 rounded-lg border border-slate-700 active:scale-95 transition-transform">🔊 単語</button>
+                        <button id="btn-speak-phrase" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1 rounded-lg border border-slate-700 active:scale-95 transition-transform">🔊 フレーズ</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- BUTTONS CONTROL PAD -->
+            <div class="w-full pt-1">
+                <button id="btn-reveal" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-[0.99] transition-transform text-sm tracking-widest">
+                    👁 答えを見る
+                </button>
+
+                <div id="quiz-choice-pad" class="hidden grid grid-cols-2 gap-3.5">
+                    <button id="btn-wrong" class="bg-gradient-to-b from-rose-600 to-rose-700 text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 transition-all text-center">
+                        ❌ 違った
+                    </button>
+                    <button id="btn-correct" class="bg-gradient-to-b from-emerald-600 to-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 transition-all text-center">
+                        ⭕ 合ってた
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer class="w-full text-center py-2 text-[10px] text-slate-600 border-t border-slate-900 bg-slate-950/40">
+        &copy; 2026 Word Hacker System [英検準1級]
+    </footer>
+
+    <script>
+        const MASTER_DATA = [{"id": 1, "section": "Section 1 (準1級)", "word": "last", "phrase": "The conference may _____ for three days if every panel is held as planned.", "meaning": "続く、持続する、(天候・体力・食品などが)持ちこたえる", "note": "『最後の』だけでなく、動詞で『続く・持ちこたえる』。", "etymology": "", "preposition": ""}, {"id": 2, "section": "Section 1 (準1級)", "word": "affect", "phrase": "Climate change can _____ food production in many regions.", "meaning": "に影響を及ぼす；を感動させる", "note": "", "etymology": "", "preposition": ""}, {"id": 3, "section": "Section 1 (準1級)", "word": "claim", "phrase": "The scientist _____ that the new method is both cheaper and safer.", "meaning": "と主張する；を(自分のものとして)要求する", "note": "主張するだけでなく、権利として要求する、災害・事故が命を奪うという意味もある。", "etymology": "clam は『叫ぶ』。声に出して主張・要求するイメージ。", "preposition": ""}, {"id": 4, "section": "Section 1 (準1級)", "word": "ship", "phrase": "The company will _____ the medical supplies to remote villages by Friday.", "meaning": "を出荷する、を輸送する", "note": "船に限らず、商品を出荷・発送する意味で広く使う。", "etymology": "", "preposition": ""}, {"id": 5, "section": "Section 1 (準1級)", "word": "issue", "phrase": "Water shortage has become a serious _____ in many dry areas.", "meaning": "問題(点)；発行(物)；発表", "note": "問題点、発行物、発表。動詞では発行する・公布する。", "etymology": "", "preposition": ""}, {"id": 6, "section": "Section 1 (準1級)", "word": "purchase", "phrase": "The city plans to _____ electric buses to reduce emissions.", "meaning": "を購入する", "note": "", "etymology": "古くは『追い求めて得る』感覚。単なる buy より正式・書き言葉寄り。", "preposition": ""}, {"id": 7, "section": "Section 1 (準1級)", "word": "occur", "phrase": "Minor errors may _____ when the data is copied by hand.", "meaning": "起こる；心に浮かぶ；現れる", "note": "起こる。occur to 人 で『人の心に浮かぶ』。", "etymology": "ob-（向かって）+ cur（走る）。出来事や考えがこちらへ走って来る→起こる/思い浮かぶ。", "preposition": ""}, {"id": 8, "section": "Section 1 (準1級)", "word": "deal", "phrase": "Local officials must _____ with the growing demand for public housing.", "meaning": "を処理する；を商う；を分配する", "note": "deal with は『扱う・対処する』。名詞では取引・量・契約。", "etymology": "", "preposition": ""}, {"id": 9, "section": "Section 1 (準1級)", "word": "consume", "phrase": "Modern households _____ far more electricity than those in the past.", "meaning": "を消費する；を食べる，飲む", "note": "消費するだけでなく、食べる・飲む、感情が人をのみ込む意味もある。", "etymology": "co-/com-/con- は『共に・一緒に』、または強調。", "preposition": ""}, {"id": 10, "section": "Section 1 (準1級)", "word": "present", "phrase": "The team will _____ its findings at an international conference.", "meaning": "を提示する、を進呈する；出席している；現在の", "note": "提示する・発表する・贈呈する。形容詞では『出席している／現在の』。", "etymology": "pre- は『前もって・前に』。", "preposition": ""}, {"id": 11, "section": "Section 2 (準1級)", "word": "fire", "phrase": "The company decided to _____ the manager after the scandal became public.", "meaning": "を解雇する、を首にする", "note": "", "etymology": "", "preposition": ""}, {"id": 12, "section": "Section 2 (準1級)", "word": "regard", "phrase": "The new policy may _____ the project in unexpected ways.", "meaning": "を見なす；を見る；を評価する", "note": "regard A as B＝AをBとみなす。regards は手紙の結びにも使う。", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 13, "section": "Section 2 (準1級)", "word": "fine", "phrase": "Researchers tried to _____ the patient’s condition before publishing their report.", "meaning": "に罰金を科す", "note": "形容詞の『細かい・見事な・晴れた』とは別に、動詞では『罰金を科す』。", "etymology": "", "preposition": ""}, {"id": 14, "section": "Section 2 (準1級)", "word": "transfer", "phrase": "The organization must _____ the proposal to protect scientific research.", "meaning": "を移す；を伝える；移る；乗り換える", "note": "物・人・権利・データを移す。自動詞では乗り換える・転勤/転校する。", "etymology": "trans-（越えて）+ fer（運ぶ）。境界を越えて運ぶ→移す・乗り換える。", "preposition": ""}, {"id": 15, "section": "Section 2 (準1級)", "word": "decline", "phrase": "A similar problem may _____ when the system is used under pressure.", "meaning": "減少する；衰退する；を断る", "note": "", "etymology": "de- は『下へ・離れて・取り除く』。否定だけで覚えない。", "preposition": ""}, {"id": 16, "section": "Section 2 (準1級)", "word": "eliminate", "phrase": "Researchers tried to _____ the old system before publishing their report.", "meaning": "を取り除く", "note": "", "etymology": "min は『小さい』。minor/minimize など。", "preposition": ""}, {"id": 17, "section": "Section 2 (準1級)", "word": "indicate", "phrase": "The organization must _____ the evidence to protect urban planning.", "meaning": "を指し示す；を述べる", "note": "", "etymology": "in- は『中へ』または『否定』。文脈・語源で見分ける。", "preposition": ""}, {"id": 18, "section": "Section 2 (準1級)", "word": "ensure", "phrase": "The new policy may _____ local residents in unexpected ways.", "meaning": "を確実にする(≒ make sure)；を守る", "note": "", "etymology": "", "preposition": ""}, {"id": 19, "section": "Section 2 (準1級)", "word": "expand", "phrase": "Researchers tried to _____ public opinion before publishing their report.", "meaning": "(を)拡大する；(を)詳説する", "note": "", "etymology": "ex-（外へ）+ pand（広げる）。内側から外へ広がる。", "preposition": ""}, {"id": 20, "section": "Section 2 (準1級)", "word": "address", "phrase": "The committee discussed _____ in relation to the local community.", "meaning": "(問題など)に対処する；に演説する；(手紙など)を(～宛てに)出す(to)", "note": "住所だけでなく、問題に取り組む、演説する、人に呼びかける意味が頻出。", "etymology": "ad-（〜へ）+ direct（まっすぐ）。相手・問題へまっすぐ向かう。", "preposition": ""}, {"id": 21, "section": "Section 3 (準1級)", "word": "identify", "phrase": "The new policy may _____ the new policy in unexpected ways.", "meaning": "を特定する；を(～と)同一視する(with)", "note": "", "etymology": "", "preposition": ""}, {"id": 22, "section": "Section 3 (準1級)", "word": "construct", "phrase": "Researchers tried to _____ the project before publishing their report.", "meaning": "を建設する(＝ build)；を構成する", "note": "", "etymology": "struct は『積み上げる・作る』。construct/destruct/instruct など。", "preposition": ""}, {"id": 23, "section": "Section 3 (準1級)", "word": "invest", "phrase": "The organization must _____ the patient’s condition to protect small businesses.", "meaning": "(を)投資する；に(～を)与える(with)", "note": "", "etymology": "in- は『中へ』または『否定』。文脈・語源で見分ける。", "preposition": ""}, {"id": 24, "section": "Section 3 (準1級)", "word": "obtain", "phrase": "The new policy may _____ the proposal in unexpected ways.", "meaning": "を得る", "note": "", "etymology": "", "preposition": ""}, {"id": 25, "section": "Section 3 (準1級)", "word": "struggle", "phrase": "The committee took a _____ approach to the problem.", "meaning": "闘い；懸命の努力", "note": "", "etymology": "", "preposition": ""}, {"id": 26, "section": "Section 3 (準1級)", "word": "counter", "phrase": "The symptoms began to _____ after several days of treatment.", "meaning": "〜と反論する、〜に反対する", "note": "", "etymology": "co-/com-/con- は『共に・一緒に』、または強調。", "preposition": ""}, {"id": 27, "section": "Section 3 (準1級)", "word": "associate", "phrase": "The new policy may _____ the evidence in unexpected ways.", "meaning": "を結び付けて考える；(～と)交際する(with)", "note": "", "etymology": "", "preposition": ""}, {"id": 28, "section": "Section 3 (準1級)", "word": "register", "phrase": "Researchers tried to _____ local residents before publishing their report.", "meaning": "を記録する，登録する；(～に)登録する(for)", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 29, "section": "Section 3 (準1級)", "word": "reveal", "phrase": "The organization must _____ public opinion to protect social welfare.", "meaning": "を明らかにする；を見せる", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 30, "section": "Section 3 (準1級)", "word": "species", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "(生物の)種；種類", "note": "", "etymology": "", "preposition": ""}, {"id": 31, "section": "Section 4 (準1級)", "word": "diet", "phrase": "The committee took a _____ approach to the problem.", "meaning": "(日常の)食べ物、療養食", "note": "", "etymology": "", "preposition": ""}, {"id": 32, "section": "Section 4 (準1級)", "word": "site", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "用地，場所；跡地；(ウェブ)サイト", "note": "", "etymology": "", "preposition": ""}, {"id": 33, "section": "Section 4 (準1級)", "word": "cell", "phrase": "The incident became a _____ that the entire community had to face.", "meaning": "細胞；独房；電池", "note": "", "etymology": "", "preposition": ""}, {"id": 34, "section": "Section 4 (準1級)", "word": "facility", "phrase": "The report treats _____ as an important factor in scientific research.", "meaning": "施設，設備；機能；才能", "note": "", "etymology": "", "preposition": ""}, {"id": 35, "section": "Section 4 (準1級)", "word": "practice", "phrase": "The situation became increasingly _____ as more details emerged.", "meaning": "実践，実行；(社会の)慣習；練習", "note": "", "etymology": "", "preposition": ""}, {"id": 36, "section": "Section 4 (準1級)", "word": "resident", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "居住者；滞在者", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 37, "section": "Section 4 (準1級)", "word": "option", "phrase": "The committee took a _____ approach to the problem.", "meaning": "選択(の自由)；選択肢", "note": "", "etymology": "", "preposition": ""}, {"id": 38, "section": "Section 4 (準1級)", "word": "organ", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "器官，臓器；組織；(パイプ)オルガン", "note": "", "etymology": "", "preposition": ""}, {"id": 39, "section": "Section 4 (準1級)", "word": "critic", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "批判する人、批評家", "note": "", "etymology": "", "preposition": ""}, {"id": 40, "section": "Section 4 (準1級)", "word": "region", "phrase": "The report treats _____ as an important factor in the local community.", "meaning": "地域；領域；部位", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 41, "section": "Section 5 (準1級)", "word": "tax", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "税金、税", "note": "", "etymology": "", "preposition": ""}, {"id": 42, "section": "Section 5 (準1級)", "word": "access", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "利用，入手；接近(の機会・方法・権利)", "note": "", "etymology": "", "preposition": ""}, {"id": 43, "section": "Section 5 (準1級)", "word": "virus", "phrase": "The committee took a _____ approach to the problem.", "meaning": "ウイルス；(感染症の)病原体", "note": "", "etymology": "", "preposition": ""}, {"id": 44, "section": "Section 5 (準1級)", "word": "bill", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "請求書；【英】勘定書(≒ 【米】check)；法案", "note": "", "etymology": "", "preposition": ""}, {"id": 45, "section": "Section 5 (準1級)", "word": "evidence", "phrase": "The incident became an _____ that the entire community had to face.", "meaning": "証拠", "note": "", "etymology": "vid/vis は『見る』。video/visible/evidence など。", "preposition": ""}, {"id": 46, "section": "Section 5 (準1級)", "word": "attempt", "phrase": "Researchers tried to _____ the old system before publishing their report.", "meaning": "を試みる，企てる", "note": "", "etymology": "", "preposition": ""}, {"id": 47, "section": "Section 5 (準1級)", "word": "account", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "説明；勘定；口座", "note": "口座、説明、記述、割合。account for で『説明する／占める』。", "etymology": "", "preposition": ""}, {"id": 48, "section": "Section 5 (準1級)", "word": "theory", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "学説；理論；原理；推測", "note": "", "etymology": "", "preposition": ""}, {"id": 49, "section": "Section 5 (準1級)", "word": "factor", "phrase": "The report treats _____ as an important _____ in social welfare.", "meaning": "要因、要素", "note": "", "etymology": "", "preposition": ""}, {"id": 50, "section": "Section 5 (準1級)", "word": "stock", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "在庫品；蓄え；株", "note": "", "etymology": "", "preposition": ""}, {"id": 51, "section": "Section 6 (準1級)", "word": "chemical", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "化学の，化学的な", "note": "", "etymology": "", "preposition": ""}, {"id": 52, "section": "Section 6 (準1級)", "word": "media", "phrase": "The report treats _____ as an important factor in the education system.", "meaning": "マスメディア、マスコミ", "note": "", "etymology": "", "preposition": ""}, {"id": 53, "section": "Section 6 (準1級)", "word": "income", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "収入；所得", "note": "", "etymology": "in- は『中へ』または『否定』。文脈・語源で見分ける。", "preposition": ""}, {"id": 54, "section": "Section 6 (準1級)", "word": "supply", "phrase": "The mayor spoke _____ about the need for reform.", "meaning": "を供給する", "note": "", "etymology": "", "preposition": ""}, {"id": 55, "section": "Section 6 (準1級)", "word": "shortage", "phrase": "The report treats _____ as an important factor in the natural environment.", "meaning": "不足、欠如", "note": "", "etymology": "", "preposition": ""}, {"id": 56, "section": "Section 6 (準1級)", "word": "poverty", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "貧困、欠乏", "note": "", "etymology": "", "preposition": ""}, {"id": 57, "section": "Section 6 (準1級)", "word": "criminal", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "犯人、犯罪者", "note": "", "etymology": "min は『小さい』。minor/minimize など。", "preposition": ""}, {"id": 58, "section": "Section 6 (準1級)", "word": "budget", "phrase": "The report treats _____ as an important factor in digital technology.", "meaning": "予算；経費", "note": "", "etymology": "", "preposition": ""}, {"id": 59, "section": "Section 6 (準1級)", "word": "authority", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "〔通例 the ～ties〕(関係)当局；権威；権限", "note": "", "etymology": "", "preposition": ""}, {"id": 60, "section": "Section 6 (準1級)", "word": "genome", "phrase": "The incident became a _____ that the entire community had to face.", "meaning": "ゲノム", "note": "", "etymology": "", "preposition": ""}, {"id": 61, "section": "Section 7 (準1級)", "word": "atmosphere", "phrase": "The report treats _____ as an important factor in public health.", "meaning": "〔the ～〕大気；雰囲気", "note": "", "etymology": "", "preposition": ""}, {"id": 62, "section": "Section 7 (準1級)", "word": "aid", "phrase": "The organization must _____ the project to protect the education system.", "meaning": "を援助する，助ける(≒ help)", "note": "", "etymology": "", "preposition": ""}, {"id": 63, "section": "Section 7 (準1級)", "word": "measure", "phrase": "The incident became a _____ that the entire community had to face.", "meaning": "措置、程度、基準", "note": "", "etymology": "", "preposition": ""}, {"id": 64, "section": "Section 7 (準1級)", "word": "subject", "phrase": "The report treats _____ as an important factor in scientific research.", "meaning": "話題；科目；主題；被験者", "note": "話題・科目・主語・被験者。be subject to で『〜を受けやすい／〜に従う』。", "etymology": "ject は『投げる』。project/reject/inject などは『投げる方向』で理解する。", "preposition": ""}, {"id": 65, "section": "Section 7 (準1級)", "word": "decade", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "10年間", "note": "", "etymology": "de- は『下へ・離れて・取り除く』。否定だけで覚えない。", "preposition": ""}, {"id": 66, "section": "Section 7 (準1級)", "word": "weapon", "phrase": "The incident became a _____ that the entire community had to face.", "meaning": "兵器，武器(≒ arms)", "note": "", "etymology": "", "preposition": ""}, {"id": 67, "section": "Section 7 (準1級)", "word": "nutrient", "phrase": "The committee took a _____ approach to the problem.", "meaning": "栄養分、栄養になるもの", "note": "", "etymology": "", "preposition": ""}, {"id": 68, "section": "Section 7 (準1級)", "word": "expense", "phrase": "Many _____ regard _____ as a sign of deeper social change.", "meaning": "〔～s〕経費；費用；犠牲", "note": "", "etymology": "ex-/e- は『外へ』。内側から外へ出すイメージ。", "preposition": ""}, {"id": 69, "section": "Section 7 (準1級)", "word": "structure", "phrase": "The incident became a _____ that the entire community had to face.", "meaning": "構造；体系；構造物", "note": "", "etymology": "struct は『積み上げる・作る』。construct/destruct/instruct など。", "preposition": ""}, {"id": 70, "section": "Section 7 (準1級)", "word": "adolescent", "phrase": "The committee took a _____ approach to the problem.", "meaning": "青年", "note": "", "etymology": "", "preposition": ""}, {"id": 71, "section": "Section 8 (準1級)", "word": "procedure", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "手順、手続き", "note": "", "etymology": "pro- は『前へ』。前に押し出す・支持する感覚もある。", "preposition": ""}, {"id": 72, "section": "Section 8 (準1級)", "word": "minimum", "phrase": "The incident became a _____ that the entire community had to face.", "meaning": "最小限度", "note": "", "etymology": "min は『小さい』。minor/minimize など。", "preposition": ""}, {"id": 73, "section": "Section 8 (準1級)", "word": "fuel", "phrase": "The committee took a _____ approach to the problem.", "meaning": "燃料；勢いを増加させるもの", "note": "", "etymology": "fuel は『火にくべるもの』。比喩で不安・怒り・議論を燃え上がらせる。", "preposition": ""}, {"id": 74, "section": "Section 8 (準1級)", "word": "resource", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "〔通例～s〕資源；〔通例～s〕資金；才覚", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 75, "section": "Section 8 (準1級)", "word": "regulation", "phrase": "The incident became a _____ that the entire community had to face.", "meaning": "規則、規制", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 76, "section": "Section 8 (準1級)", "word": "contract", "phrase": "The report treats _____ as an important factor in international trade.", "meaning": "契約(書)；協定", "note": "", "etymology": "tract は『引く』。attract/contract/extract など。", "preposition": ""}, {"id": 77, "section": "Section 8 (準1級)", "word": "insurance", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "保険；保険料；保険金", "note": "", "etymology": "in- は『中へ』または『否定』。文脈・語源で見分ける。", "preposition": ""}, {"id": 78, "section": "Section 8 (準1級)", "word": "employment", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "雇用、職", "note": "", "etymology": "", "preposition": ""}, {"id": 79, "section": "Section 8 (準1級)", "word": "ban", "phrase": "Researchers tried to _____ public opinion before publishing their report.", "meaning": "を(法的に)禁止する；を締め出す", "note": "", "etymology": "", "preposition": ""}, {"id": 80, "section": "Section 8 (準1級)", "word": "vehicle", "phrase": "The situation became increasingly _____ as more details emerged.", "meaning": "車、(特に陸上の)乗り物、輸送機関、伝達手段", "note": "", "etymology": "", "preposition": ""}, {"id": 81, "section": "Section 9 (準1級)", "word": "soil", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "土地，土壌；(悪事などの)温床", "note": "", "etymology": "", "preposition": ""}, {"id": 82, "section": "Section 9 (準1級)", "word": "cargo", "phrase": "The committee took a _____ approach to the problem.", "meaning": "(主に船・飛行機の)積荷、貨物", "note": "", "etymology": "", "preposition": ""}, {"id": 83, "section": "Section 9 (準1級)", "word": "aircraft", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "航空機、飛行機", "note": "", "etymology": "", "preposition": ""}, {"id": 84, "section": "Section 9 (準1級)", "word": "current", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "現在の；現代の；通用している", "note": "", "etymology": "cur/curs は『走る』。occur/current/course など。", "preposition": ""}, {"id": 85, "section": "Section 9 (準1級)", "word": "political", "phrase": "The committee took a _____ approach to the problem.", "meaning": "政治(上)の", "note": "", "etymology": "", "preposition": ""}, {"id": 86, "section": "Section 9 (準1級)", "word": "significant", "phrase": "The situation became increasingly _____ as more details emerged.", "meaning": "重要な，重大な；意義深い", "note": "", "etymology": "", "preposition": ""}, {"id": 87, "section": "Section 9 (準1級)", "word": "effective", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "効果的な、有効な", "note": "", "etymology": "", "preposition": ""}, {"id": 88, "section": "Section 9 (準1級)", "word": "military", "phrase": "The committee took a _____ approach to the problem.", "meaning": "軍の，軍事(用)の", "note": "", "etymology": "", "preposition": ""}, {"id": 89, "section": "Section 9 (準1級)", "word": "due", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "予定された；(支払)期日で；しかるべき", "note": "", "etymology": "", "preposition": ""}, {"id": 90, "section": "Section 9 (準1級)", "word": "essential", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "(～に)必要不可欠な(to / for)；本質的な", "note": "", "etymology": "", "preposition": ""}, {"id": 91, "section": "Section 10 (準1級)", "word": "illegal", "phrase": "The committee took a _____ approach to the problem.", "meaning": "違法の、非合法の", "note": "", "etymology": "", "preposition": ""}, {"id": 92, "section": "Section 10 (準1級)", "word": "immune", "phrase": "The organization must _____ the project to protect the education system.", "meaning": "(～に対して)免疫を持つ(to)；(～を)免れた(from)", "note": "", "etymology": "in-/im- は『中へ』または『否定』。後ろの音で形が変わる。", "preposition": ""}, {"id": 93, "section": "Section 10 (準1級)", "word": "numerous", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "非常に数の多い", "note": "", "etymology": "", "preposition": ""}, {"id": 94, "section": "Section 10 (準1級)", "word": "extreme", "phrase": "The committee took a _____ approach to the problem.", "meaning": "極端な；極度の，過激な", "note": "", "etymology": "ex-/e- は『外へ』。内側から外へ出すイメージ。", "preposition": ""}, {"id": 95, "section": "Section 10 (準1級)", "word": "general", "phrase": "The situation became increasingly _____ as more details emerged.", "meaning": "全体の、一般的な", "note": "", "etymology": "", "preposition": ""}, {"id": 96, "section": "Section 10 (準1級)", "word": "agricultural", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "農業の、農耕の", "note": "", "etymology": "", "preposition": ""}, {"id": 97, "section": "Section 10 (準1級)", "word": "overall", "phrase": "The committee took a _____ approach to the problem.", "meaning": "総合的な；全体的な", "note": "", "etymology": "", "preposition": ""}, {"id": 98, "section": "Section 10 (準1級)", "word": "additional", "phrase": "The situation became increasingly _____ as more details emerged.", "meaning": "追加の、付加的な", "note": "", "etymology": "", "preposition": ""}, {"id": 99, "section": "Section 10 (準1級)", "word": "entire", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "全体の，全部の(≒ whole)；完全な", "note": "", "etymology": "", "preposition": ""}, {"id": 100, "section": "Section 10 (準1級)", "word": "severe", "phrase": "The committee took a _____ approach to the problem.", "meaning": "(人・規律・事態・天気などが)厳しい；猛烈な", "note": "", "etymology": "", "preposition": ""}, {"id": 101, "section": "Section 11 (準1級)", "word": "alter", "phrase": "The organization must _____ the new policy to protect public health.", "meaning": "を変える；変わる(≒ change)", "note": "", "etymology": "", "preposition": ""}, {"id": 102, "section": "Section 11 (準1級)", "word": "adopt", "phrase": "The new policy may _____ the project in unexpected ways.", "meaning": "を採用する；(態度など)をとる；を養子にする", "note": "", "etymology": "", "preposition": ""}, {"id": 103, "section": "Section 11 (準1級)", "word": "vote", "phrase": "The report treats _____ as an important factor in small businesses.", "meaning": "投票；投票結果；〔the ～〕選挙権", "note": "", "etymology": "", "preposition": ""}, {"id": 104, "section": "Section 11 (準1級)", "word": "determine", "phrase": "The organization must _____ the proposal to protect scientific research.", "meaning": "を決定する；を正確に知る", "note": "", "etymology": "min は『小さい』。minor/minimize など。", "preposition": ""}, {"id": 105, "section": "Section 11 (準1級)", "word": "enable", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "(人)が…できるようにする；を可能にする", "note": "", "etymology": "", "preposition": ""}, {"id": 106, "section": "Section 11 (準1級)", "word": "conduct", "phrase": "The committee took a _____ approach to the problem.", "meaning": "(調査・実験など)を実施する；を導く", "note": "行う、導く。名詞では行為・ふるまい。", "etymology": "duct/duce は『導く』。", "preposition": ""}, {"id": 107, "section": "Section 11 (準1級)", "word": "direct", "phrase": "The organization must _____ the evidence to protect urban planning.", "meaning": "を案内する、を指揮する", "note": "", "etymology": "", "preposition": ""}, {"id": 108, "section": "Section 11 (準1級)", "word": "absorb", "phrase": "The new policy may _____ local residents in unexpected ways.", "meaning": "を吸収する；を併合する；を夢中にさせる", "note": "", "etymology": "", "preposition": ""}, {"id": 109, "section": "Section 11 (準1級)", "word": "imply", "phrase": "The data must be examined _____ before any conclusion is drawn.", "meaning": "を暗に意味する；を必然的に伴う", "note": "", "etymology": "", "preposition": ""}, {"id": 110, "section": "Section 11 (準1級)", "word": "operate", "phrase": "The organization must _____ the problem to protect the local community.", "meaning": "を操作する；機能する；手術する", "note": "", "etymology": "", "preposition": ""}, {"id": 111, "section": "Section 12 (準1級)", "word": "demonstrate", "phrase": "The new policy may _____ the new policy in unexpected ways.", "meaning": "を論証［証明］する；デモをする", "note": "", "etymology": "de- は『下へ・離れて・取り除く』。否定だけで覚えない。", "preposition": ""}, {"id": 112, "section": "Section 12 (準1級)", "word": "boost", "phrase": "Researchers tried to _____ the project before publishing their report.", "meaning": "を押し上げる；を増加させる", "note": "", "etymology": "", "preposition": ""}, {"id": 113, "section": "Section 12 (準1級)", "word": "prove", "phrase": "The organization must _____ the patient’s condition to protect small businesses.", "meaning": "を証明する；判明する，わかる", "note": "", "etymology": "", "preposition": ""}, {"id": 114, "section": "Section 12 (準1級)", "word": "monitor", "phrase": "The new policy may _____ the proposal in unexpected ways.", "meaning": "を監視する；を傍受する", "note": "", "etymology": "", "preposition": ""}, {"id": 115, "section": "Section 12 (準1級)", "word": "defeat", "phrase": "Researchers tried to _____ the results before publishing their report.", "meaning": "を負かす(≒ beat)；を失敗させる", "note": "", "etymology": "de- は『下へ・離れて・取り除く』。否定だけで覚えない。", "preposition": ""}, {"id": 116, "section": "Section 12 (準1級)", "word": "protest", "phrase": "The organization must _____ the old system to _____ international trade.", "meaning": "(に)抗議する；を主張する", "note": "", "etymology": "pro- は『前へ』。前に押し出す・支持する感覚もある。", "preposition": ""}, {"id": 117, "section": "Section 12 (準1級)", "word": "target", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "(到達・攻撃)目標；的", "note": "", "etymology": "", "preposition": ""}, {"id": 118, "section": "Section 12 (準1級)", "word": "preserve", "phrase": "Researchers tried to _____ local residents before publishing their report.", "meaning": "を保存する；を保持する；を保護する", "note": "", "etymology": "pre- は『前もって・前に』。", "preposition": ""}, {"id": 119, "section": "Section 12 (準1級)", "word": "oppose", "phrase": "The organization must _____ public opinion to protect social welfare.", "meaning": "に反対する；を対抗［対比］させる", "note": "", "etymology": "", "preposition": ""}, {"id": 120, "section": "Section 12 (準1級)", "word": "migrate", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "（鳥・魚などが）渡る；人が移住する；データ・システムが移行する", "note": "「鳥・魚が渡る」だけでなく、人が移住する、データ・制度が別環境へ移行する意味も重要。", "etymology": "migr- は『移動する』。鳥の渡り、人の移住、データ移行まで『場所・環境を移す』感覚。", "preposition": ""}, {"id": 121, "section": "Section 13 (準1級)", "word": "analyze", "phrase": "Researchers tried to _____ the new policy before publishing their report.", "meaning": "を分析する", "note": "", "etymology": "", "preposition": ""}, {"id": 122, "section": "Section 13 (準1級)", "word": "discourage", "phrase": "The situation became increasingly _____ as more details emerged.", "meaning": "(人)にやる気をなくさせる；を落胆させる", "note": "", "etymology": "dis- は『離す・反対・否定』。", "preposition": ""}, {"id": 123, "section": "Section 13 (準1級)", "word": "confirm", "phrase": "The new policy may _____ the patient’s condition in unexpected ways.", "meaning": "を確認する；を裏づける", "note": "", "etymology": "co-/com-/con- は『共に・一緒に』、または強調。", "preposition": ""}, {"id": 124, "section": "Section 13 (準1級)", "word": "intend", "phrase": "Researchers tried to _____ the proposal before publishing their report.", "meaning": "を意図する", "note": "", "etymology": "ten/tain は『保つ・持つ』。", "preposition": ""}, {"id": 125, "section": "Section 13 (準1級)", "word": "predict", "phrase": "The organization must _____ the results to protect the natural environment.", "meaning": "を予言［予測］する", "note": "", "etymology": "dict は『言う』。predict/contradict/dictate などの核。", "preposition": ""}, {"id": 126, "section": "Section 13 (準1級)", "word": "extend", "phrase": "The new policy may _____ the old system in unexpected ways.", "meaning": "を伸［延］ばす；伸びる；及ぶ", "note": "", "etymology": "ten/tain は『保つ・持つ』。", "preposition": ""}, {"id": 127, "section": "Section 13 (準1級)", "word": "figure", "phrase": "The report treats _____ as an important factor in urban planning.", "meaning": "数字；姿；人物；図表", "note": "数字・人物・姿。figure out で『理解する』。", "etymology": "", "preposition": ""}, {"id": 128, "section": "Section 13 (準1級)", "word": "transportation", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "交通[輸送]機関、輸送", "note": "", "etymology": "port は『運ぶ』。import/export/transport/support の核。", "preposition": ""}, {"id": 129, "section": "Section 13 (準1級)", "word": "institution", "phrase": "The incident became an _____ that the entire community had to face.", "meaning": "機関；協会；施設；制度", "note": "", "etymology": "in- は『中へ』または『否定』。文脈・語源で見分ける。", "preposition": ""}, {"id": 130, "section": "Section 13 (準1級)", "word": "theft", "phrase": "The report treats _____ as an important factor in the local community.", "meaning": "窃盗(罪)", "note": "", "etymology": "", "preposition": ""}, {"id": 131, "section": "Section 14 (準1級)", "word": "candidate", "phrase": "The situation became increasingly _____ as more details emerged.", "meaning": "(～の)候補(者)(for)；志願者", "note": "", "etymology": "", "preposition": ""}, {"id": 132, "section": "Section 14 (準1級)", "word": "mammal", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "哺乳動物", "note": "", "etymology": "", "preposition": ""}, {"id": 133, "section": "Section 14 (準1級)", "word": "economist", "phrase": "The report treats _____ as an important factor in small businesses.", "meaning": "経済学者", "note": "", "etymology": "", "preposition": ""}, {"id": 134, "section": "Section 14 (準1級)", "word": "protein", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "たんぱく質", "note": "", "etymology": "pro- は『前へ』。前に押し出す・支持する感覚もある。", "preposition": ""}, {"id": 135, "section": "Section 14 (準1級)", "word": "immigrant", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "(外国からの)移住者、移民", "note": "", "etymology": "migr は『移動する』。", "preposition": ""}, {"id": 136, "section": "Section 14 (準1級)", "word": "property", "phrase": "The report treats _____ as an important factor in international trade.", "meaning": "不動産、財産、特性", "note": "財産だけでなく、性質・特性という意味も大事。", "etymology": "pro- は『前へ』。前に押し出す・支持する感覚もある。", "preposition": ""}, {"id": 137, "section": "Section 14 (準1級)", "word": "fund", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "〔しばしば～s〕基金，資金", "note": "", "etymology": "", "preposition": ""}, {"id": 138, "section": "Section 14 (準1級)", "word": "habitat", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "生息地；(人の)居住地", "note": "", "etymology": "", "preposition": ""}, {"id": 139, "section": "Section 14 (準1級)", "word": "symptom", "phrase": "The report treats _____ as an important factor in social welfare.", "meaning": "症状；兆候(≒ sign)", "note": "", "etymology": "", "preposition": ""}, {"id": 140, "section": "Section 14 (準1級)", "word": "eruption", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "勃発、噴火", "note": "", "etymology": "rupt は『破る』。interrupt/corrupt/erupt など。", "preposition": ""}, {"id": 141, "section": "Section 15 (準1級)", "word": "quantity", "phrase": "The incident became a _____ that the entire community had to face.", "meaning": "量；分量", "note": "", "etymology": "", "preposition": ""}, {"id": 142, "section": "Section 15 (準1級)", "word": "ad", "phrase": "The report treats _____ as an important factor in the education system.", "meaning": "広告", "note": "", "etymology": "", "preposition": ""}, {"id": 143, "section": "Section 15 (準1級)", "word": "saving", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "節約、倹約、預金(額)、蓄え", "note": "", "etymology": "", "preposition": ""}, {"id": 144, "section": "Section 15 (準1級)", "word": "territory", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "領土；(活動の)領域；(動物の)テリトリー", "note": "", "etymology": "", "preposition": ""}, {"id": 145, "section": "Section 15 (準1級)", "word": "threat", "phrase": "The report treats _____ as an important factor in the natural environment.", "meaning": "脅威；(悪い)兆し；脅迫", "note": "", "etymology": "", "preposition": ""}, {"id": 146, "section": "Section 15 (準1級)", "word": "sufferer", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "苦しむ人、被災者、病人", "note": "", "etymology": "fer は『運ぶ』。transfer/refer/confer などで使われる。", "preposition": ""}, {"id": 147, "section": "Section 15 (準1級)", "word": "emission", "phrase": "The incident became an _____ that the entire community had to face.", "meaning": "排気、放出(物)", "note": "", "etymology": "mit/miss は『送る』。mission/message とつながる。", "preposition": ""}, {"id": 148, "section": "Section 15 (準1級)", "word": "executive", "phrase": "The committee took a _____ approach to the problem.", "meaning": "重役、幹部、経営者", "note": "", "etymology": "ex-/e- は『外へ』。内側から外へ出すイメージ。", "preposition": ""}, {"id": 149, "section": "Section 15 (準1級)", "word": "strategy", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "戦略", "note": "", "etymology": "", "preposition": ""}, {"id": 150, "section": "Section 15 (準1級)", "word": "riot", "phrase": "The incident became a _____ that the entire community had to face.", "meaning": "暴動", "note": "", "etymology": "", "preposition": ""}, {"id": 151, "section": "Section 16 (準1級)", "word": "district", "phrase": "The report treats _____ as an important factor in public health.", "meaning": "地区；行政区", "note": "", "etymology": "dis- は『離す・反対・否定』。", "preposition": ""}, {"id": 152, "section": "Section 16 (準1級)", "word": "election", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "選挙", "note": "", "etymology": "", "preposition": ""}, {"id": 153, "section": "Section 16 (準1級)", "word": "medication", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "(医師が処方した)薬、医薬品、薬物治療", "note": "", "etymology": "", "preposition": ""}, {"id": 154, "section": "Section 16 (準1級)", "word": "breed", "phrase": "Researchers tried to _____ the proposal before publishing their report.", "meaning": "を繁殖させる，育てる；繁殖する", "note": "", "etymology": "", "preposition": ""}, {"id": 155, "section": "Section 16 (準1級)", "word": "conflict", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "争い；論争；不一致", "note": "", "etymology": "co-/com-/con- は『共に・一緒に』、または強調。", "preposition": ""}, {"id": 156, "section": "Section 16 (準1級)", "word": "productivity", "phrase": "The incident became a _____ that the entire community had to face.", "meaning": "生産性", "note": "", "etymology": "duct/duce は『導く』。", "preposition": ""}, {"id": 157, "section": "Section 16 (準1級)", "word": "organism", "phrase": "The report treats _____ as an important factor in urban planning.", "meaning": "有機体、生物", "note": "", "etymology": "", "preposition": ""}, {"id": 158, "section": "Section 16 (準1級)", "word": "representative", "phrase": "The situation became increasingly _____ as more details emerged.", "meaning": "代表者、代理人", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 159, "section": "Section 16 (準1級)", "word": "warehouse", "phrase": "The incident became a _____ that the entire community had to face.", "meaning": "倉庫", "note": "", "etymology": "", "preposition": ""}, {"id": 160, "section": "Section 16 (準1級)", "word": "refund", "phrase": "The report treats _____ as an important factor in the local community.", "meaning": "返金、払い戻し(金)", "note": "", "etymology": "re- は『再び・後ろへ』。元に戻す/繰り返す感覚。", "preposition": ""}, {"id": 161, "section": "Section 17 (準1級)", "word": "tuition", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "【主に米】 授業料；(個人)指導", "note": "", "etymology": "", "preposition": ""}, {"id": 162, "section": "Section 17 (準1級)", "word": "range", "phrase": "The incident became a _____ that the entire community had to face.", "meaning": "範囲、領域", "note": "", "etymology": "", "preposition": ""}, {"id": 163, "section": "Section 17 (準1級)", "word": "victim", "phrase": "The report treats _____ as an important factor in small businesses.", "meaning": "犠牲(者)，被害者", "note": "", "etymology": "", "preposition": ""}, {"id": 164, "section": "Section 17 (準1級)", "word": "dose", "phrase": "The situation became increasingly _____ as more details emerged.", "meaning": "(薬の1回分の)服用量；放射線の1回の照射量", "note": "", "etymology": "", "preposition": ""}, {"id": 165, "section": "Section 17 (準1級)", "word": "mainland", "phrase": "The incident became a _____ that the entire community had to face.", "meaning": "本土", "note": "", "etymology": "", "preposition": ""}, {"id": 166, "section": "Section 17 (準1級)", "word": "waterfall", "phrase": "The report treats _____ as an important factor in international trade.", "meaning": "滝", "note": "", "etymology": "", "preposition": ""}, {"id": 167, "section": "Section 17 (準1級)", "word": "satellite", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "人工衛星、衛星", "note": "", "etymology": "", "preposition": ""}, {"id": 168, "section": "Section 17 (準1級)", "word": "evolution", "phrase": "The incident became an _____ that the entire community had to face.", "meaning": "進化、発展、展開", "note": "", "etymology": "", "preposition": ""}, {"id": 169, "section": "Section 17 (準1級)", "word": "prey", "phrase": "The report treats _____ as an important factor in social welfare.", "meaning": "獲物；犠牲者", "note": "", "etymology": "", "preposition": ""}, {"id": 170, "section": "Section 17 (準1級)", "word": "bystander", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "傍観者", "note": "", "etymology": "", "preposition": ""}, {"id": 171, "section": "Section 18 (準1級)", "word": "creature", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "生き物、(特に人以外の)動物", "note": "", "etymology": "", "preposition": ""}, {"id": 172, "section": "Section 18 (準1級)", "word": "civilization", "phrase": "The report treats _____ as an important factor in the education system.", "meaning": "文明", "note": "", "etymology": "", "preposition": ""}, {"id": 173, "section": "Section 18 (準1級)", "word": "tribe", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "部族；仲間", "note": "", "etymology": "", "preposition": ""}, {"id": 174, "section": "Section 18 (準1級)", "word": "permission", "phrase": "The incident became a _____ that the entire community had to face.", "meaning": "許可、承認", "note": "", "etymology": "mit/miss は『送る』。mission/message とつながる。", "preposition": ""}, {"id": 175, "section": "Section 18 (準1級)", "word": "barrier", "phrase": "Unexpected changes can _____ during a long-term research project.", "meaning": "(～に対する)障壁(against / to)；防壁", "note": "", "etymology": "", "preposition": ""}, {"id": 176, "section": "Section 18 (準1級)", "word": "wage", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "賃金、給料", "note": "", "etymology": "", "preposition": ""}, {"id": 177, "section": "Section 18 (準1級)", "word": "drone", "phrase": "The report provides a _____ explanation of the issue.", "meaning": "ドローン、(無線操作の)無人機", "note": "", "etymology": "", "preposition": ""}, {"id": 178, "section": "Section 18 (準1級)", "word": "appearance", "phrase": "The report treats _____ as an important factor in digital technology.", "meaning": "外観、出現", "note": "", "etymology": "", "preposition": ""}, {"id": 179, "section": "Section 18 (準1級)", "word": "embassy", "phrase": "Many experts regard _____ as a sign of deeper social change.", "meaning": "大使館；大使一行", "note": "", "etymology": "", "preposition": ""}, {"id": 180, "section": "Section 18 (準1級)", "word": "skeleton", "phrase": "The incident became a _____ that the entire community had to face.", "meaning": "骨格；骨組み；概略", "note": "", "etymology": "", "preposition": ""}];
+        const storageKey = 'hacker_wrong_list_j1kyu';
+        let wrongList = JSON.parse(localStorage.getItem(storageKey)) || [];
+        let currentCombo = 0;
+
+        let currentSection = "";
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let isWrongOnlyMode = false;
+
+        const SECTIONS = [...new Set(MASTER_DATA.map(item => item.section))];
+
+        const domHome = document.getElementById('screen-home');
+        const domQuiz = document.getElementById('screen-quiz');
+        const domSectionList = document.getElementById('section-list');
+        const domTotalProgressPercent = document.getElementById('total-progress-percent');
+        const domTotalProgressBar = document.getElementById('total-progress-bar');
+        
+        const domQuizCount = document.getElementById('quiz-count');
+        const domQuizProgressBar = document.getElementById('quiz-progress-bar');
+        const domQuizComboBadge = document.getElementById('quiz-combo-badge');
+        const domQuizComboCount = document.getElementById('quiz-combo-count');
+        const domHeaderCombo = document.getElementById('header-combo');
+        const domHeaderComboCount = document.getElementById('header-combo-count');
+        const domQuizSectionTitle = document.getElementById('quiz-section-title');
+
+        const domHintMeaning = document.getElementById('quiz-hint-meaning');
+        const domBoostEtymology = document.getElementById('quiz-boost-etymology');
+        const domBoostPreposition = document.getElementById('quiz-boost-preposition');
+        const domPhrase = document.getElementById('quiz-phrase');
+        const domAnswerZone = document.getElementById('quiz-answer-zone');
+        const domCorrectWord = document.getElementById('quiz-correct-word');
+
+        const domBtnReveal = document.getElementById('btn-reveal');
+        const domBtnChoicePad = document.getElementById('quiz-choice-pad');
+        const domBtnWrong = document.getElementById('btn-wrong');
+        const domBtnCorrect = document.getElementById('btn-correct');
+        const domBtnBack = document.getElementById('btn-back');
+        const domBtnSpeakWord = document.getElementById('btn-speak-word');
+        const domBtnSpeakPhrase = document.getElementById('btn-speak-phrase');
+
+        function renderHome() {
+            domSectionList.innerHTML = "";
+            let totalItems = MASTER_DATA.length;
+            let totalMastered = totalItems - wrongList.length;
+            
+            let globalPercent = totalItems > 0 ? Math.round((totalMastered / totalItems) * 100) : 0;
+            domTotalProgressPercent.innerText = globalPercent + "%";
+            domTotalProgressBar.style.width = globalPercent + "%";
+
+            SECTIONS.forEach(secName => {
+                const secItems = MASTER_DATA.filter(item => item.section === secName);
+                const secWrongItems = secItems.filter(item => wrongList.includes(item.id));
+                const wrongCount = secWrongItems.length;
+
+                let statusBadge = `<span class="bg-slate-800 text-slate-400 text-[10px] px-2 py-0.5 rounded font-bold">進行中</span>`;
+                if (wrongCount === 0) {
+                    statusBadge = `<span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-bold">CLEAR ✨</span>`;
+                } else if (wrongCount > 0) {
+                    statusBadge = `<span class="bg-rose-500/20 text-rose-400 text-[10px] px-2 py-0.5 rounded font-bold font-mono">苦手: ${wrongCount}問</span>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = "glass-card rounded-xl p-4 border border-slate-800 flex flex-col justify-between space-y-2.5";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold text-slate-200">${secName}</h3>
+                        ${statusBadge}
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-xs">
+                        <button onclick="startQuiz('${secName}', false)" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg text-center">解く</button>
+                        <button onclick="startQuiz('${secName}', true)" ${wrongCount === 0 ? 'disabled class="bg-slate-800 text-slate-600 font-bold py-2 rounded-lg text-center cursor-not-allowed"' : 'class="bg-rose-600/80 hover:bg-rose-600 text-white font-bold py-2 rounded-lg text-center"'} >苦手のみ</button>
+                        <button onclick="resetSectionProgress('${secName}')" class="bg-slate-800 hover:bg-slate-700 text-slate-400 font-medium py-2 rounded-lg text-center text-[11px]">リセット</button>
+                    </div>
+                `;
+                domSectionList.appendChild(card);
+            });
+
+            if (currentCombo > 0) {
+                domHeaderCombo.classList.remove('hidden');
+                domHeaderComboCount.innerText = currentCombo;
+            } else {
+                domHeaderCombo.classList.add('hidden');
+            }
+        }
+
+        function startQuiz(sectionName, wrongOnly) {
+            currentSection = sectionName;
+            isWrongOnlyMode = wrongOnly;
+            
+            let source = MASTER_DATA.filter(item => item.section === sectionName);
+            if (wrongOnly) {
+                source = source.filter(item => wrongList.includes(item.id));
+            }
+
+            if (source.length === 0) {
+                alert("対象の問題がありません。");
+                return;
+            }
+
+            currentQuestions = [...source].sort(() => Math.random() - 0.5);
+            currentIndex = 0;
+
+            domHome.classList.add('hidden');
+            domQuiz.classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            domBtnReveal.classList.remove('hidden');
+            domBtnChoicePad.classList.add('hidden');
+            domAnswerZone.classList.add('invisible');
+
+            if (currentIndex >= currentQuestions.length) {
+                alert(`セクション完了！現在のコンボ: ${currentCombo} 連勝！`);
+                exitQuiz();
+                return;
+            }
+
+            const currentItem = currentQuestions[currentIndex];
+
+            domQuizCount.innerText = (currentQuestions.length - currentIndex);
+            domQuizSectionTitle.innerText = currentItem.section;
+            let progressRatio = (currentIndex / currentQuestions.length) * 100;
+            domQuizProgressBar.style.width = progressRatio + "%";
+
+            let fullNote = currentItem.note ? `<div class="text-slate-400 text-xs font-normal mt-1 bg-slate-950/40 p-2 rounded border border-slate-800/80">${currentItem.note}</div>` : '';
+            domHintMeaning.innerHTML = `<div>${currentItem.meaning}</div>${fullNote}`;
+            
+            domBoostEtymology.innerText = currentItem.etymology || "なし";
+            domBoostPreposition.innerText = currentItem.preposition || "なし";
+
+            domPhrase.innerText = currentItem.phrase;
+            domCorrectWord.innerText = currentItem.word;
+
+            if (currentCombo >= 3) {
+                domQuizComboBadge.classList.remove('opacity-0');
+                domQuizComboCount.innerText = currentCombo;
+            } else {
+                domQuizComboBadge.classList.add('opacity-0');
+            }
+        }
+
+        function revealAnswer() {
+            domBtnReveal.classList.add('hidden');
+            domBtnChoicePad.classList.remove('hidden');
+            domAnswerZone.classList.remove('invisible');
+
+            const currentItem = currentQuestions[currentIndex];
+            let rawPhrase = currentItem.phrase;
+            let targetWord = currentItem.word;
+
+            if (rawPhrase.trim().startsWith("_____")) {
+                targetWord = targetWord.charAt(0).toUpperCase() + targetWord.slice(1);
+            } else {
+                targetWord = targetWord.toLowerCase();
+            }
+            domCorrectWord.innerText = targetWord;
+            speak(targetWord, 1.0);
+        }
+
+        function handleUserJudgment(isCorrect) {
+            const currentItem = currentQuestions[currentIndex];
+
+            if (isCorrect) {
+                wrongList = wrongList.filter(id => id !== currentItem.id);
+                currentCombo++;
+            } else {
+                if (!wrongList.includes(currentItem.id)) {
+                    wrongList.push(currentItem.id);
+                }
+                currentCombo = 0;
+            }
+
+            localStorage.setItem(storageKey, JSON.stringify(wrongList));
+            currentIndex++;
+            showQuestion();
+        }
+
+        function exitQuiz() {
+            domQuiz.classList.add('hidden');
+            domHome.classList.remove('hidden');
+            renderHome();
+        }
+
+        function resetSectionProgress(sectionName) {
+            if (confirm(`${sectionName} の苦手記録をクリアしますか？`)) {
+                const targetIds = MASTER_DATA.filter(item => item.section === sectionName).map(item => item.id);
+                wrongList = wrongList.filter(id => !targetIds.includes(id));
+                localStorage.setItem(storageKey, JSON.stringify(wrongList));
+                renderHome();
+            }
+        }
+
+        function speak(text, speed = 1.0) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                let cleanText = text.replace(/_____/g, "blank");
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.lang = 'en-US';
+                utterance.rate = speed;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        domBtnReveal.addEventListener('click', revealAnswer);
+        domBtnCorrect.addEventListener('click', () => handleUserJudgment(true));
+        domBtnWrong.addEventListener('click', () => handleUserJudgment(false));
+        domBtnBack.addEventListener('click', () => exitQuiz());
+        domBtnSpeakWord.addEventListener('click', () => speak(currentQuestions[currentIndex].word, 1.0));
+        domBtnSpeakPhrase.addEventListener('click', () => speak(currentQuestions[currentIndex].phrase, 0.95));
+
+        renderHome();
+    </script>
+</body>
+</html>
