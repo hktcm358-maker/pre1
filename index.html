@@ -279,6 +279,168 @@
         }
 
         // --- 問題の提示 ---
+
+        // --- 穴あき表示ヘルパー（熟語・be動詞・過去形/三単現にも対応） ---
+        function escapeRegExp(str) {
+            return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function normalizeTargetExpression(targetWord) {
+            return String(targetWord || "")
+                .replace(/[~〜]/g, " ")
+                .replace(/…/g, " ")
+                .replace(/[（）]/g, " ")
+                .replace(/\([^)]*\)/g, " ")
+                .replace(/\[[^\]]*\]/g, " ")
+                .replace(/[･・]/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+        }
+
+        function getVerbForms(base) {
+            const irregulars = {
+                "be": ["be", "am", "are", "is", "was", "were", "been", "being"],
+                "take": ["take", "takes", "took", "taken", "taking"],
+                "make": ["make", "makes", "made", "making"],
+                "come": ["come", "comes", "came", "coming"],
+                "go": ["go", "goes", "went", "gone", "going"],
+                "get": ["get", "gets", "got", "gotten", "getting"],
+                "give": ["give", "gives", "gave", "given", "giving"],
+                "do": ["do", "does", "did", "done", "doing"],
+                "have": ["have", "has", "had", "having"],
+                "run": ["run", "runs", "ran", "running"],
+                "write": ["write", "writes", "wrote", "written", "writing"],
+                "speak": ["speak", "speaks", "spoke", "spoken", "speaking"],
+                "break": ["break", "breaks", "broke", "broken", "breaking"],
+                "bring": ["bring", "brings", "brought", "bringing"],
+                "buy": ["buy", "buys", "bought", "buying"],
+                "catch": ["catch", "catches", "caught", "catching"],
+                "choose": ["choose", "chooses", "chose", "chosen", "choosing"],
+                "feel": ["feel", "feels", "felt", "feeling"],
+                "find": ["find", "finds", "found", "finding"],
+                "keep": ["keep", "keeps", "kept", "keeping"],
+                "know": ["know", "knows", "knew", "known", "knowing"],
+                "leave": ["leave", "leaves", "left", "leaving"],
+                "lose": ["lose", "loses", "lost", "losing"],
+                "pay": ["pay", "pays", "paid", "paying"],
+                "put": ["put", "puts", "putting"],
+                "read": ["read", "reads", "reading"],
+                "see": ["see", "sees", "saw", "seen", "seeing"],
+                "send": ["send", "sends", "sent", "sending"],
+                "set": ["set", "sets", "setting"],
+                "sit": ["sit", "sits", "sat", "sitting"],
+                "stand": ["stand", "stands", "stood", "standing"],
+                "teach": ["teach", "teaches", "taught", "teaching"],
+                "tell": ["tell", "tells", "told", "telling"],
+                "think": ["think", "thinks", "thought", "thinking"],
+                "understand": ["understand", "understands", "understood", "understanding"]
+            };
+
+            const b = String(base || "").toLowerCase();
+            if (irregulars[b]) return irregulars[b];
+
+            const forms = new Set([b]);
+            if (b.endsWith("e")) {
+                forms.add(b + "s");
+                forms.add(b.slice(0, -1) + "ed");
+                forms.add(b.slice(0, -1) + "ing");
+            } else if (b.endsWith("y") && !/[aeiou]y$/.test(b)) {
+                forms.add(b.slice(0, -1) + "ies");
+                forms.add(b.slice(0, -1) + "ied");
+                forms.add(b + "ing");
+            } else {
+                forms.add(b + "s");
+                forms.add(b + "ed");
+                forms.add(b + "ing");
+            }
+            return Array.from(forms);
+        }
+
+        function buildTargetRegex(targetWord) {
+            const normalized = normalizeTargetExpression(targetWord);
+            if (!normalized) return null;
+
+            const candidates = new Set([normalized]);
+
+            if (/^be\s+/i.test(normalized)) {
+                candidates.add(normalized.replace(/^be\s+/i, ""));
+            }
+
+            const cleaned = normalized
+                .replace(/\b[A-Z]\b/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+            if (cleaned) candidates.add(cleaned);
+
+            const patterns = [];
+
+            candidates.forEach(candidate => {
+                const words = candidate.split(/\s+/).filter(Boolean);
+                if (words.length === 0) return;
+
+                const first = words[0].toLowerCase();
+
+                if (first === "be" && words.length >= 2) {
+                    const rest = words.slice(1).map(escapeRegExp).join("\\s+");
+                    patterns.push(`\\b(?:${getVerbForms("be").map(escapeRegExp).join("|")})\\s+${rest}\\b`);
+                    return;
+                }
+
+                const firstPattern = `(?:${getVerbForms(first).map(escapeRegExp).join("|")})`;
+                const restPattern = words.slice(1).map(escapeRegExp).join("\\s+");
+
+                if (words.length >= 2) {
+                    patterns.push(`\\b${firstPattern}\\s+${restPattern}\\b`);
+                    patterns.push(`\\b${words.map(escapeRegExp).join("\\s+")}\\b`);
+                } else {
+                    patterns.push(`\\b${firstPattern}\\b`);
+                    patterns.push(`\\b${escapeRegExp(words[0])}[a-z]*\\b`);
+                }
+            });
+
+            const uniquePatterns = Array.from(new Set(patterns)).sort((a, b) => b.length - a.length);
+            if (uniquePatterns.length === 0) return null;
+            return new RegExp(uniquePatterns.join("|"), "gi");
+        }
+
+        function renderMaskedPhrase(rawPhrase, targetWord, reveal = false) {
+            const regex = buildTargetRegex(targetWord);
+            const safePhrase = escapeHtml(rawPhrase);
+
+            if (!regex) return safePhrase;
+
+            let matched = false;
+            const rendered = safePhrase.replace(regex, (match) => {
+                matched = true;
+                if (reveal) {
+                    return `<span class="text-rose-500 underline font-black font-mono">${match}</span>`;
+                }
+                return "_____";
+            });
+
+            if (!matched) {
+                const simpleTarget = normalizeTargetExpression(targetWord);
+                if (simpleTarget) {
+                    const simpleRegex = new RegExp(escapeRegExp(simpleTarget), "gi");
+                    return safePhrase.replace(simpleRegex, reveal
+                        ? (match) => `<span class="text-rose-500 underline font-black font-mono">${match}</span>`
+                        : "_____");
+                }
+            }
+
+            return rendered;
+        }
+
+
         function showQuestion() {
             if (currentDeck.length === 0 || currentIndex >= currentDeck.length) {
                 alert("🎉 セクション内のすべての問題をクリアしました！完璧なコンプリートです！");
@@ -304,20 +466,9 @@
             domQuizBoostPreposition.textContent = currentQuestion.note || "（補足なし）";
             domQuizCorrectWord.textContent = currentQuestion.word;
 
-            // ターゲット単語を隠して「_____」に変える自動マスキングロジック（指導のプロ視点）
-            const rawPhrase = currentQuestion.phrase;
-            const targetWord = currentQuestion.word;
-
-            const escapedWord = targetWord.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-            const regex = new RegExp(`\\b${escapedWord}\\b|\\b${escapedWord}[a-z]*\\b`, 'gi');
-            
-            let blankedPhrase = rawPhrase.replace(regex, "_____");
-            
-            if (!blankedPhrase.includes("_____")) {
-                blankedPhrase = rawPhrase.replace(new RegExp(escapedWord, 'gi'), "_____");
-            }
-            
-            domQuizPhrase.innerHTML = blankedPhrase;
+            // ターゲット単語・熟語を隠して「_____」に変える
+            // take up ~ → take/takes/took/taken/taking up、be tired of → is/was/are tired of などにも対応
+            domQuizPhrase.innerHTML = renderMaskedPhrase(currentQuestion.phrase, currentQuestion.word, false);
         }
 
         // --- 答えを見る ---
@@ -327,17 +478,7 @@
             domQuizAnswerZone.classList.remove('invisible');
 
             const currentQuestion = currentDeck[currentIndex];
-            const rawPhrase = currentQuestion.phrase;
-            const targetWord = currentQuestion.word;
-
-            const escapedWord = targetWord.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-            const regex = new RegExp(`\\b${escapedWord}\\b|\\b${escapedWord}[a-z]*\\b`, 'gi');
-            
-            let highlightedPhrase = rawPhrase.replace(regex, (match) => {
-                return `<span class="text-rose-500 underline font-black font-mono">${match}</span>`;
-            });
-
-            domQuizPhrase.innerHTML = highlightedPhrase;
+            domQuizPhrase.innerHTML = renderMaskedPhrase(currentQuestion.phrase, currentQuestion.word, true);
 
             // ネイティブ発音を即座に自動再生
             speak(currentQuestion.word, 1.0);
